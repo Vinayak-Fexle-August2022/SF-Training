@@ -12,6 +12,7 @@
 **/
 
 public class DynamicWaysToDealWithCollactions {
+
     //constructor
     public DynamicWaysToDealWithCollactions(){
         map<string, map<string, List<Student__c>>> mapOfSchoolNameClassNameAndRelatedStudentDetail = new map<string, map<string, List<Student__c>>>();
@@ -30,6 +31,8 @@ public class DynamicWaysToDealWithCollactions {
                 
                 mapOfClassNameAndRelatedStudentDetails.put(cls.Name,studentList);
                 mapOfSchoolNameClassNameAndRelatedStudentDetail.put(school.Name, mapOfClassNameAndRelatedStudentDetails);
+
+
                
             }
         }

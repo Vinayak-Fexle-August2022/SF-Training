@@ -12,18 +12,27 @@
 **/
 
 public class DynamicWaysToDealWithCollactions {
+
+    //constructor
     public DynamicWaysToDealWithCollactions(){
         map<string, map<string, List<Student__c>>> mapOfSchoolNameClassNameAndRelatedStudentDetail = new map<string, map<string, List<Student__c>>>();
-        List<School__c> sclList = [SELECT Id,Name FROM School__c];
         
-        for(School__c scl: sclList){
+        //for loop to get school object records one-by-one
+        for(School__c school: [SELECT Id,Name FROM School__c])
+        {
             map<string, List<Student__c>> mapOfClassNameAndRelatedStudentDetails = new map<string, List<Student__c>>();
-            List<Class__c> clsList = [SELECT Name, Id FROM Class__c WHERE School__r.Id = :scl.Id];
+            
+            //for loop to get class object records respect to the related school one-by-one
+            for(Class__c cls: [SELECT Name, Id FROM Class__c WHERE School__r.Id = :school.Id])
+            {
+                
+                //getting List of students related to perticuler Class
+                List<Student__c> studentList = [SELECT Name FROM Student__c WHERE Class__r.Id = :cls.Id];
+                
+                mapOfClassNameAndRelatedStudentDetails.put(cls.Name,studentList);
+                mapOfSchoolNameClassNameAndRelatedStudentDetail.put(school.Name, mapOfClassNameAndRelatedStudentDetails);
 
-            	for(Class__c cls: clsList){
-                	List<Student__c> stuList = [SELECT Name FROM Student__c WHERE Class__r.Id = :cls.Id];
-                	mapOfClassNameAndRelatedStudentDetails.put(cls.Name,stuList);
-                	mapOfSchoolNameClassNameAndRelatedStudentDetail.put(scl.Name, mapOfClassNameAndRelatedStudentDetails);
+
                
             }
         }

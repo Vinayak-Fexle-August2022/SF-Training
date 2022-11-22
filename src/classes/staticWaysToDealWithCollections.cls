@@ -1,29 +1,40 @@
+/**
+*  Assignment       :   Assignment-1st (ApexSession#3)
+*
+*  Purpose          :   Class to demonstrate the static ways to deal with or populate collections in apex.
+*
+*  Created Date     :   05/09/2022
+*
+*  Created By       :   Vinayak Banjara
+*
+*  Revision Logs    :   V_1.0 - Created
+*
+**/
+
+
 public class staticWaysToDealWithCollections {
 
-    Public staticWaysToDealWithCollections(){
+    Public static map<string, map<string,List<string>>> staticWaysToDealWithCollectionsV1()
+    {
         map<string, map<string,List<string>>> mapOfCountriesWithStateAndCityDetails = new map<string, map<string,List<string>>>();
 
-        List<string> citiesOfRajasthan = new List<string>{'Jaipur','Udaypur'};
-        map<string,List<string>> StateAndCitiesOfRajasthan = new map<string,List<string>>();
-        StateAndCitiesOfRajasthan.put('Rajasthan',citiesOfRajasthan);
-        mapOfCountriesWithStateAndCityDetails.put('India1', StateAndCitiesOfRajasthan);
+
+        mapOfCountriesWithStateAndCityDetails.put('India', new map<string,List<string>>
+                                                  {
+                                                      'Rajasthan' => new List<String>{'Jaipur','Udaypur'},
+                                                      'WB' => new List<String>{'Kolkata','Asansole'}
+                                                  } 
+                                                 );
         
-        List<string> citiesOfWB = new List<string>{'Kolkata','Asansole'};
-        map<string,List<string>> StateAndCitiesOfWB = new map<string,List<string>>();
-    	StateAndCitiesOfWB.put('WB',citiesOfWB);
-        mapOfCountriesWithStateAndCityDetails.put('India2', StateAndCitiesOfWB);
-    	
-        List<string> citiesOfTexas = new List<string>{'Dallas','Austin'};
-        map<string,List<string>> StateAndCitiesOfTaxas = new map<string,List<string>>();
-    	StateAndCitiesOfTaxas.put('Texas',citiesOfTexas);
-    	mapOfCountriesWithStateAndCityDetails.put('USA1', StateAndCitiesOfTaxas);
+       mapOfCountriesWithStateAndCityDetails.put('USA', new map<string,List<string>>
+                                                  {
+                                                      'Texas' => new List<String>{'Dallas','Austin'},
+                                                      'NC' => new List<String>{'Charllot','Rayleigh'}
+                                                  } 
+                                                 );
         
-        List<string> citiesOfNC = new List<string>{'Charllot','Rayleigh'};
-        map<string,List<string>> StateAndCitiesOfNC  = new map<string,List<string>>();
-    	StateAndCitiesOfNC.put('NC',citiesOfNC);
-        mapOfCountriesWithStateAndCityDetails.put('USA', StateAndCitiesOfNC);
+        return mapOfCountriesWithStateAndCityDetails;
         
-        System.debug(mapOfCountriesWithStateAndCityDetails);
     }
 
 }

@@ -1,3 +1,14 @@
+/**
+*
+*  Purpose          :      To Alert Students With Less Than 75% Attendence.
+*
+*  Created Date     :      21/10/2022
+*
+*  Created By       :      Vinayak Banjara
+*
+*  Revision Logs    :      V_1.0 - Created
+*
+**/
 Global without sharing class Sch_Batch_StudentLessAttendanceAlert implements Schedulable
 {
 	public void execute(SchedulableContext SC)

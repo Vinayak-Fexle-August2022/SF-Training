@@ -1,4 +1,15 @@
-public Without Sharing class Batch_StudentLessAttendanceAlert implements Database.Batchable<sObject>, Database.stateful
+/**
+*
+*  Purpose          :      To Alert Students With Less Than 75% Attendence.
+*
+*  Created Date     :      21/10/2022
+*
+*  Created By       :      Vinayak Banjara
+*
+*  Revision Logs    :      V_1.0 - Created
+*
+**/
+public without sharing class Batch_StudentLessAttendanceAlert implements Database.Batchable<sObject>, Database.stateful
 {
     public String query;
     public String log;

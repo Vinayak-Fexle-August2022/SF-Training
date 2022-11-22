@@ -13,7 +13,7 @@
 
 
 @isTest
-public class TestStaticWaysToDealWithCollections 
+public class StaticWaysToDealWithCollections_Test
 {
     @isTest private Static void testMapOfCountryWithStateAndCityDetails()
     {

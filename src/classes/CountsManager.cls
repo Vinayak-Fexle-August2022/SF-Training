@@ -1,114 +1,219 @@
 /**
-*  Assignment       :   Assignment-4th (ApexSession#4)
 *
-*  Purpose          :   Class to demonstrate two methods which will update number of Classes and number of student
-*						fields on school object.
+*  Purpose          :   Class to have the logic to update the key counts fields on a school record.
 *
-*  Created Date     :   09-Sep-2022
+*  Created Date     :   09/06/2022
 *
-*  Created By       :   Vinayak Banjara
+*  Created By       :   Abhinav Sharma
 *
-*  Revision Logs    :   V_1.1 - Created
+*  Revision Logs    :   V_1.0 - Created
 *
 **/
-
-
-public without sharing class CountsManager
+public without sharing class CountsManager 
 {
-    public static void updateNoOfStudentsDetails(String schoolName)
+    //"updateNoOfStudentsDetails" method based logic : - it will fetch school related details on the basis of given school name. 
+    //if unable to find a school record then it will log a System.debug message that "Unable to find out a school for given name" 
+    //otherwise for the retrieved school, it will have a further logic to count no of students associated with that school 
+    //and then to update the "No of Students" field on school with that value.
+    public static void updateNoOfStudentsDetails(String schoolName) 
     {
-        //Condition To Handle Null Or Empty School Name.
-        if(schoolName != Null && schoolName.trim().length() > 0)
+        if(String.isNotBlank(schoolName)) 
         {
-            
-        
-            List<School__c> schoolToBeUpdated = [SELECT Id, Name
-                                                 FROM School__c 
-                                                 where School__c.Name = :schoolName.trim() LIMIT 1];
-            
-           //Conndition To Handle If There Is No School Present For Given School Name.
-            if(!schoolToBeUpdated.isEmpty())
+            Map<Id, School__c> mapOfSchools = new Map<Id, School__c>();
+            for(School__c sch : [SELECT ID, No_of_Students__c 
+                                 FROM School__c
+                                 WHERE Name =: schoolName.trim()
+                                ]) 
             {
-                AggregateResult studentCount = [SELECT Count(Student__c.Id)
-                                                FROM Student__c 
-                                                WHERE School__r.Id = :schoolToBeUpdated[0].Id];
-                
-                double countOfStudents = (double) studentCount.get('expr0');
-                
-                //Condition To Handle If The Given School Has No Students.
-                if(countOfStudents > 0)
-                {
-                     schoolToBeUpdated[0].No_Of_Students__c = countOfStudents;
-                     Update schoolToBeUpdated[0];
-                     System.debug('Succsesfully Updated Number_Of_Students On School Object...');
-                }
-                else
-                {
-                    schoolToBeUpdated[0].No_Of_Students__c = 0;
-                    Update schoolToBeUpdated[0];
-                }
+                mapOfSchools.put(sch.Id, sch);
             }
-            else
+            if(mapOfSchools.values() != null && mapOfSchools.values().size() > 0)
             {
-                System.debug('Unable to find out a Schoool for given Name...!');
+                CountsManager.doCalculationForNoOfStudents(mapOfSchools);    
             }
+            else 
+            {
+                System.debug(System.Label.ERROR_MSG_UNABLE_TO_FIND_SCHOOL_BY_NAME);        
+            }   
         }
-        else
+        else 
         {
-            System.debug('Invalid School Name, Please Provide Valid Name...!');
+            System.debug(System.Label.ERROR_MSG_SCHOOL_NAME_DETAILS_MISSING);   
         }
-    }    
+    }
     
-    public static void updateNoOfClassesDetails(String schoolId)
+    public static void doCalculationForNoOfStudents(Map<Id, School__c> mapOfSchools) 
     {
-         //Condition To Handle Null Or Empty School Id.
-        if(schoolId != Null && schoolId.trim().length() > 0)
+        if(mapOfSchools.values() != null && mapOfSchools.values().size() > 0) 
         {
-            
-        
-            List<School__c> schoolToBeUpdated = [SELECT Id, Name
-                                                 FROM School__c 
-                                                 where School__c.Id = :schoolId.trim() LIMIT 1];
-            
-           //Conndition To Handle If There Is No School Present For Given School Id.
-            if(!schoolToBeUpdated.isEmpty())
+            Map<Id, Integer> mapOfSchoolIdWithNoOfStudentsCount = new Map<Id, Integer>();
+            for(Id schoolId : mapOfSchools.keySet()) 
             {
-                
-                AggregateResult studentCount = [SELECT Count(Class__c.Id)
-                                                FROM Class__c 
-                                                WHERE School__r.Id = :schoolToBeUpdated[0].Id];
-                
-                double countOfClasses = (double) studentCount.get('expr0');
-                
-                //Condition To Handle If The Given School Has No Students.
-                if(countOfClasses > 0)
+                mapOfSchoolIdWithNoOfStudentsCount.put(schoolId, 0);    
+            }
+            
+            for(Student__c student : [SELECT ID, Class__r.School__c
+                                      FROM Student__c
+                                      WHERE Class__c != null
+                                      AND Class__r.School__c != null
+                                      AND Class__r.School__c IN : mapOfSchools.keySet()
+                                     ]) 
+            {
+                if(!mapOfSchoolIdWithNoOfStudentsCount.containsKey(student.Class__r.School__c)) 
                 {
-                     schoolToBeUpdated[0].No_Of_classes__c = countOfClasses;
-                     Update schoolToBeUpdated[0];
-                     System.debug('Succsesfully Updated Number_Of_Students On School Object...');
+                    mapOfSchoolIdWithNoOfStudentsCount.put(student.Class__r.School__c, 1);
                 }
-                else
+                else 
                 {
-                    schoolToBeUpdated[0].No_Of_classes__c = 0;
-                    Update schoolToBeUpdated[0];
+                    mapOfSchoolIdWithNoOfStudentsCount.put(student.Class__r.School__c, 
+                                                           (mapOfSchoolIdWithNoOfStudentsCount.get(student.Class__r.School__c) + 1));                        
                 }
+            }
+            
+            if(mapOfSchoolIdWithNoOfStudentsCount.values() != null && mapOfSchoolIdWithNoOfStudentsCount.values().size() > 0) 
+            {
+                List<School__c> listOfSchoolsToBeUpated = new List<School__c>();
+                for(School__c sch : mapOfSchools.values()) 
+                {
+                    School__c sc = mapOfSchools.get(sch.Id);
+                    
+                    if(mapOfSchoolIdWithNoOfStudentsCount.containsKey(sch.Id)) 
+                    {
+                        sc.No_of_Students__c = mapOfSchoolIdWithNoOfStudentsCount.get(sch.Id);
+                    }
+                    else
+                    {
+                        sc.No_of_Students__c = 0;
+                    }
+                    listOfSchoolsToBeUpated.add(sc);
+                }
+                if(listOfSchoolsToBeUpated.size() > 0) 
+                {
+                    Utilities.BypassAllTriggers = true;
+                    update listOfSchoolsToBeUpated;
+                    Utilities.BypassAllTriggers = false;
+                }
+            }
+        }
+    }
+    
+    //"updateNoOfClassesDetails" method based logic : - it will fetch school related details on the basis of given school id. 
+    //if unable to find a school record then it will log a System.debug message that "Unable to find out a school for given record ID" 
+    //otherwise for the retrieved school, it will have a further logic to count no of classes associated with that school and 
+    //then to update the "No of Classes" field on school with that value.
+    public static void updateNoOfClassesDetails(Id schoolId) 
+    {
+        if(schoolId != null) 
+        {
+            CountsManager.updateNoOfClassesDetails(new Set<Id> {schoolId});
+        }
+        else 
+        {
+            System.debug(System.Label.ERROR_MSG_SCHOOL_ID_DETAILS_MISSING);    
+        }        
+    }
+    
+    public static void updateNoOfClassesDetails(Set<Id> schoolIds) 
+    {
+        if(schoolIds.size() > 0) 
+        {
+            List<School__c> schools = [SELECT Id, Name, 
+                                       (SELECT ID FROM Class__r) 
+                                       FROM School__c
+                                       WHERE Id IN : schoolIds
+                                      ];
+            
+            if(schools.size() > 0) 
+            {
+                for (School__c sc : schools) 
+                {
+                    sc.No_of_Classes__c = sc.Class__r.size();
+                }
+                Utilities.BypassAllTriggers = true;
+                update schools;
+                Utilities.BypassAllTriggers = false;
             }
             else
             {
-                System.debug('Unable to find out a Schoool for given Id...!');
+                System.debug(System.Label.ERROR_MSG_UNABLE_TO_FIND_SCHOOL_BY_ID);        
+            }    
+        }
+    }
+    
+    //"updateNoOfClassesDetails" method based logic : - it will fetch school related details on the basis of given school id. 
+    //if unable to find a school record then it will log a System.debug message that "Unable to find out a school for given record ID" 
+    //otherwise for the retrieved school, it will have a further logic to count no of classes associated with that school and 
+    //then to update the "No of Classes" field on school with that value.
+    public static void updateNoOfClassesDetails2(Id schoolId) 
+    {
+        if(schoolId != null) 
+        {
+            List<School__c> schools = [SELECT Id
+                                       FROM School__c
+                                       WHERE Id =: schoolId
+                                      ];
+            if(schools.size() > 0) 
+            {
+                CountsManager.updateNoOfClassesDetails2(new Set<Id>{schoolId});    
+            }
+            else 
+            {
+                System.debug(System.Label.ERROR_MSG_UNABLE_TO_FIND_SCHOOL_BY_ID);        
             }
         }
-        else
+        else 
         {
-            System.debug('Invalid School Id, Please Provide Valid School Id...!');
+            System.debug(System.Label.ERROR_MSG_SCHOOL_ID_DETAILS_MISSING);    
+        }        
+    }
+    
+    public static void updateNoOfClassesDetails2(Set<Id> schoolIds) 
+    {
+        if(schoolIds.size() > 0) 
+        {
+            Map<Id, Integer> mapOfSchoolIdWithClassesCount = new Map<Id, Integer>();
+            for (AggregateResult aggRes : [SELECT COUNT(ID) numOfClasses, School__c schoolId
+                                           FROM Class__c
+                                           WHERE School__c IN : schoolIds
+                                           GROUP BY School__c
+                                          ]
+                ) 
+            {
+                Id schoolRecordId = (Id) aggRes.get(Constants.SCHOOL_ID);
+                Integer numberOfAssociatedClasses = (Integer) aggRes.get(Constants.NUM_OF_CLASSES);
+                mapOfSchoolIdWithClassesCount.put(schoolRecordId, numberOfAssociatedClasses);
+            }
+            if(mapOfSchoolIdWithClassesCount.values() != null && mapOfSchoolIdWithClassesCount.values().size() > 0) 
+            {
+                List<School__c> listOfSchoolsToBeUpated = new List<School__c>();
+                for(Id scId : mapOfSchoolIdWithClassesCount.keySet()) 
+                {
+                    School__c scRec = new School__c();
+                    scRec.Id = scId;
+                    scRec.No_of_Classes__c = mapOfSchoolIdWithClassesCount.get(scId);
+                    listOfSchoolsToBeUpated.add(scRec);
+                }
+                if(listOfSchoolsToBeUpated.size() > 0) 
+                {
+                    Utilities.BypassAllTriggers = true;
+                    update listOfSchoolsToBeUpated;
+                    Utilities.BypassAllTriggers = false;
+                }
+            }
+            else 
+            {
+                Integer i=0;
+                List<Id> listOfRecordsIds = new List<Id>();
+                listOfRecordsIds.addAll(schoolIds);
+                
+                School__c scRecord = new School__c();
+                scRecord.Id = listOfRecordsIds[i];
+                scRecord.No_of_Classes__c = 0;
+                
+                Utilities.BypassAllTriggers = true;
+                update scRecord;
+                Utilities.BypassAllTriggers = false;
+            }    
         }
-    }    
+    }
 }
-
-
-
-/**
-*   OutPut: For Method updateNoOfStudentsDetails  => Succsesfully Updated Number_Of_Students On School Object...
-*			For Method updateNoOfClassesDetails   => Succsesfully Updated Number_Of_Classes On School Object...'
-*												 
-**/
